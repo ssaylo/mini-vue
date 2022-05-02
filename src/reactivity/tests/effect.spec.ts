@@ -75,8 +75,15 @@ it("stop", () => {
   obj.prop = 2;
   expect(dummy).toBe(2);
   stop(runner);
-  obj.prop = 3;
+
+  // obj.prop = 3;  
+  // 直接自增就挂了
+  // 因为 obj.prop ++ equals obj.prop += 1
+  // 这是是先 get 然后再 set
+  // get 会重新收集依赖，之前的 cleanupEffect 失效
+  obj.prop++;
   expect(dummy).toBe(2);
+
 
   // stopped effect should still be call manually
   runner()

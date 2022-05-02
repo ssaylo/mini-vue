@@ -1,5 +1,8 @@
 import { extend } from "../shared";
 
+let activeEffect: any;
+let shouldTrack: boolean;
+
 class ReactiveEffect {
   private _fn: any;
 
@@ -16,8 +19,16 @@ class ReactiveEffect {
   }
 
   run() {
+    if (!this.active) {
+      return this._fn();
+    }
+
+    shouldTrack = true;
     activeEffect = this;
-    return this._fn();  
+    const res = this._fn();
+    shouldTrack = false;
+
+    return res;
   }
 
   stop() {
@@ -46,7 +57,10 @@ export function track(target: string, key: string | symbol) {
     dep = new Set();
     depsMap.set(key, dep);
   } 
+
   if (!activeEffect) return;
+
+  if (!shouldTrack) return;
   dep.add(activeEffect);
   activeEffect.deps.push(dep);
 }
@@ -63,7 +77,6 @@ export function trigger(target: string, key: string | symbol) {
   }
 }
 
-let activeEffect: any;
 export function effect(fn: any, options: { scheduler?: any, onStop?: any } = {}) {
   // scheduler
   const { scheduler, onStop } = options
