@@ -1,15 +1,33 @@
+import { extend } from "../shared";
+
 class ReactiveEffect {
   private _fn: any;
 
   public _scheduler: any;
+  public deps: any = [];
+  public onStop: any;
 
-  constructor(fn: any, public scheduler?: any) {
+  // runner isStop?
+  public active = true;
+
+  constructor(fn: any, public scheduler?: any, onStop?: any) {
     this._fn = fn;
+    this.onStop = onStop;
   }
 
   run() {
     activeEffect = this;
     return this._fn();  
+  }
+
+  stop() {
+    if (this.active) {
+      cleanUpEffect(this);
+      this.active = false;
+      if (this.onStop) {
+        this.onStop();
+      }
+    }
   }
 }
 
@@ -28,7 +46,9 @@ export function track(target: string, key: string | symbol) {
     dep = new Set();
     depsMap.set(key, dep);
   } 
+  if (!activeEffect) return;
   dep.add(activeEffect);
+  activeEffect.deps.push(dep);
 }
 
 export function trigger(target: string, key: string | symbol) {
@@ -44,14 +64,29 @@ export function trigger(target: string, key: string | symbol) {
 }
 
 let activeEffect: any;
-export function effect(fn: any, options: { scheduler?: any } = {}) {
+export function effect(fn: any, options: { scheduler?: any, onStop?: any } = {}) {
   // scheduler
-  const { scheduler } = options
+  const { scheduler, onStop } = options
   // fn
-  const _effect = new ReactiveEffect(fn, scheduler);
+  const _effect: any = new ReactiveEffect(fn, scheduler, onStop);
+
+  extend(_effect, options);
+  // Object.assign(_effect, options)
 
   _effect.run();
 
   // 这里需要处理一下指针的问题，以当前的这个实例作为 this 的一个指向。
-  return _effect.run.bind(_effect);
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
+}
+
+export function stop(runner: any) {
+  runner.effect.stop();
+}
+
+function cleanUpEffect(effect: any) {
+  effect.deps.forEach((dep: any) => {
+    dep.delete(effect);
+  })
 }

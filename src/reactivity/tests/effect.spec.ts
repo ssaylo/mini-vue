@@ -1,5 +1,6 @@
 import { reactive } from '../reactive';
 import { effect } from '../effect';
+import { stop } from '../effect';
 
 describe("effect", () => {
   // it.skip("happy path", () => {
@@ -63,4 +64,39 @@ it("scheduler", () => {
   // run manually
   run();
   expect(dummy).toBe(2);
+})
+
+it("stop", () => {
+  let dummy;
+  const obj = reactive({ prop: 1 });
+  const runner = effect(() => {
+    dummy = obj.prop;
+  });
+  obj.prop = 2;
+  expect(dummy).toBe(2);
+  stop(runner);
+  obj.prop = 3;
+  expect(dummy).toBe(2);
+
+  // stopped effect should still be call manually
+  runner()
+  expect(dummy).toBe(3);
+})
+
+it("onStop", () => {
+  const obj = reactive({
+    foo: 1,
+  });
+  const onStop = jest.fn();
+  let dummy;
+  const runner = effect(
+    () => {
+      dummy = obj.foo;
+    },
+    {
+      onStop,
+    }
+  )
+  stop(runner);
+  expect(onStop).toBeCalledTimes(1);
 })
