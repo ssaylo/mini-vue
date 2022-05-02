@@ -8,7 +8,7 @@ class ReactiveEffect {
 
   run() {
     activeEffect = this;
-    this._fn();  
+    return this._fn();  
   }
 }
 
@@ -44,4 +44,7 @@ export function effect(fn: any) {
   const _effect = new ReactiveEffect(fn);
 
   _effect.run();
+
+  // 这里需要处理一下指针的问题，以当前的这个实例作为 this 的一个指向。
+  return _effect.run.bind(_effect);
 }
