@@ -4,7 +4,12 @@ export const App = {
   // <template></template>
   // render
   render() {
-    return h("div", this.msg);
+    return h(
+      "div",
+      { id: 'root', class: ["red", "hard"] },
+      // 'hello, ' + this.msg
+      [h("p", { class: "red" }, "hi"), h("p", { class: "green" }, "hello") ]
+    );
   },
   setup() {
     // composition
