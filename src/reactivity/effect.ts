@@ -44,6 +44,8 @@ class ReactiveEffect {
 
 const targetMap = new Map();
 export function track(target: string, key: string | symbol) {
+  if (!isTracking()) return;
+
   //  taget -> key -> dep
   let depsMap = targetMap.get(target);
 
@@ -58,11 +60,15 @@ export function track(target: string, key: string | symbol) {
     depsMap.set(key, dep);
   } 
 
-  if (!activeEffect) return;
+  // 已经在 dep 中, 则不需要收集
+  if (dep.has(activeEffect)) return;
 
-  if (!shouldTrack) return;
   dep.add(activeEffect);
   activeEffect.deps.push(dep);
+}
+
+function isTracking() {
+  return shouldTrack && activeEffect !== undefined;
 }
 
 export function trigger(target: string, key: string | symbol) {
