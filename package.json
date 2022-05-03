@@ -4,15 +4,21 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rollup -c rollup.config.js"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
     "@babel/preset-env": "^7.17.10",
     "@babel/preset-typescript": "^7.16.7",
+    "tslib": "^2.4.0",
+    "@rollup/plugin-typescript": "^8.3.2",
     "@types/jest": "^27.4.1",
     "babel-jest": "^28.0.3",
     "jest": "^28.0.3",
+    "rollup": "^2.71.1",
     "typescript": "^4.6.4"
+  },
+  "dependencies": {
   }
 }
