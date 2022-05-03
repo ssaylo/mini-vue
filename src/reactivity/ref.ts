@@ -1,0 +1,43 @@
+import { hasChanged, isObject } from '../shared';
+import { trackEffects, triggerEffects, isTracking } from './effect';
+import { reactive } from './reactive';
+
+class RefImpl {
+  private _value: any;
+  private _rawValue: any;
+  public dep: any;
+
+  constructor(value: any) {
+    this._rawValue = value;
+    this._value = convert(value);
+    // value -> reactive，变成了 proxy，所以下面的hasChanged需要做一定的修改
+    this.dep = new Set();
+  }
+
+  public get value() {
+    trackRefValue(this);
+    return this._value;
+  }
+
+  public set value(newValue) {
+    if (!hasChanged(newValue, this._rawValue)) return;
+
+    this._rawValue = newValue;
+    this._value = convert(newValue);
+    triggerEffects(this.dep);
+  }
+}
+
+function trackRefValue(ref: any) {
+  if (isTracking()) {
+    trackEffects(ref.dep);
+  }
+}
+
+function convert(value: any) {
+  return isObject(value) ? reactive(value) : value;
+}
+
+export function ref(value: any) {
+  return new RefImpl(value);
+}

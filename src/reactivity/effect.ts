@@ -42,6 +42,14 @@ class ReactiveEffect {
   }
 }
 
+export function trackEffects(dep: any) {
+  // 已经在 dep 中, 则不需要收集
+  if (dep.has(activeEffect)) return;
+
+  dep.add(activeEffect);
+  activeEffect.deps.push(dep);
+}
+
 const targetMap = new Map();
 export function track(target: string, key: string | symbol) {
   if (!isTracking()) return;
@@ -59,28 +67,27 @@ export function track(target: string, key: string | symbol) {
     dep = new Set();
     depsMap.set(key, dep);
   } 
-
-  // 已经在 dep 中, 则不需要收集
-  if (dep.has(activeEffect)) return;
-
-  dep.add(activeEffect);
-  activeEffect.deps.push(dep);
+  trackEffects(dep);
 }
 
-function isTracking() {
+export function isTracking() {
   return shouldTrack && activeEffect !== undefined;
 }
 
-export function trigger(target: string, key: string | symbol) {
-  let depsMap = targetMap.get(target);
-  let dep = depsMap.get(key);
-  for (const effect of dep) {
+export function triggerEffects(dep: any) {
+    for (const effect of dep) {
     if (effect.scheduler) {
       effect.scheduler();
     } else {
       effect.run();
     }
   }
+}
+
+export function trigger(target: string, key: string | symbol) {
+  let depsMap = targetMap.get(target);
+  let dep = depsMap.get(key);
+  triggerEffects(dep);
 }
 
 export function effect(fn: any, options: { scheduler?: any, onStop?: any } = {}) {
