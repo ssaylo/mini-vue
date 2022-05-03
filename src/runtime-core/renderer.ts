@@ -8,6 +8,10 @@ export function render(vnode: any, container: any) {
 export function patch(vnode: any, container: any) {
   // component
 
+  console.log(vnode.type);
+
+  //TODO: so how to distinguish between element and compoennt?
+  // processElement();
   // check type of vnode
   processComponent(vnode, container);
 
