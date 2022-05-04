@@ -7,8 +7,12 @@ export const App = {
     return h(
       "div",
       { id: 'root', class: ["red", "hard"] },
-      // 'hello, ' + this.msg
-      [h("p", { class: "red" }, "hi"), h("p", { class: "green" }, "hello") ]
+      // setupState 这里并没有 $el
+      // this.$el
+      // this.$data
+      // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>proxy<<<<<<<<<<<<<<<<<<<-
+      'hello, ' + this.msg
+      // [h("p", { class: "red" }, "hi"), h("p", { class: "green" }, "hello") ]
     );
   },
   setup() {
