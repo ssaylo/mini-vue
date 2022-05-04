@@ -55,7 +55,12 @@ function mountElement(vnode: any, container: any) {
 
   for (const key in props) {
     const val = props[key];
-    el.setAttribute(key, val);
+    // 具体的 click
+    if (key === "onClick") {
+      el.addEventListener("click", val);
+    } else {
+      el.setAttribute(key, val);
+    }
   }
   container.append(el);
 }

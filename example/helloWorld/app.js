@@ -10,7 +10,13 @@ export const App = {
     window.self = this;
     return h(
       "div",
-      { id: 'root', class: ["red", "hard"] },
+      {
+        id: 'root',
+        class: ["red", "hard"],
+        onClick() {
+          alert('click');
+        }
+      },
       // setupState 这里并没有 $el
       // this.$el
       // this.$data
