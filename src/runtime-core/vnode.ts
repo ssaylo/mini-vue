@@ -5,5 +5,6 @@ export function createVNode(type: string, props?: any, children?: any) {
     children,
     el: null,
   }
+
   return vnode;
 }
