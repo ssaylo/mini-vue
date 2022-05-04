@@ -4,6 +4,7 @@ import { Foo } from './foo.js';
 window.self = null;
 
 export const App = {
+  name: 'app',
   // .vue
   // <template></template>
   // render
