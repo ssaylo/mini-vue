@@ -11,10 +11,13 @@ export const App = {
       [
         h("div", {}, "App"),
         h(Foo, {
-          onAdd() {
-            alert('123')
+          onAdd([{a, b}]) {
+            // alert('123')
             // on + Event listen emit and trigger
-            console.log("listen emit add, onAdd");
+            console.log("listen emit add, onAdd", a + b);
+          },
+          onAddFoo([{a, b}]) {
+            console.log("parscal case")
           }
         })
       ]

@@ -13,3 +13,16 @@ export function hasOwn(obj: any, key: string) {
 }
 
 export const hasChanged = (newValue: any, oldValue: any) => !Object.is(newValue, oldValue);
+
+export const capitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function toHandlerKey(str: string) {
+  return str ? "on" + capitalize(str) : "";
+}
+
+export function camelize(str: string) {
+  return str.replace(/-(\w)/g, (_, c) => c ? c.toUpperCase() : "");
+}
+

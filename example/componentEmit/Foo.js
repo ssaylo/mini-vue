@@ -5,7 +5,8 @@ export const Foo = {
   setup(props, { emit }) {
     const emitAdd = () => {
       console.log("emit add");
-      emit("add");
+      emit("add", { a: 1, b : 2 });
+      emit("add-foo", { a: 3, b: 4 });
     };
     return {
       emitAdd

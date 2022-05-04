@@ -1,10 +1,14 @@
-export function emit(instance: any, event: any) {
+import { camelize, capitalize, toHandlerKey } from "../shared";
+
+export function emit(instance: any, event: any, ...args: any[]) {
   console.log(">>>>>>>>>>>>>>>>>>>>emit");
   // instance.props -> event
   const { props } = instance;
-  // TPP
-  debugger
-  // 先去写一个特定的行为，然后重构成能用的行为
-  const handler = props["onAdd"];
-  handler && handler();
+  // top to bottom, small to big
+  //  add -> Add
+  const handlerKey = toHandlerKey(camelize(event));
+  const handler = props[handlerKey];
+  handler && handler(args);
 }
+
+// extract common logic is really important!

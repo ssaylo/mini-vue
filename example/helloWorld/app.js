@@ -16,10 +16,10 @@ export const App = {
         id: 'root',
         class: ["red", "hard"],
         onClick() {
-          alert('click');
+          alert('onClick');
         },
         onMouseOver() { 
-          alert('click');
+          alert('onMouseOver');
         }
       },
       // setupState 这里并没有 $el
