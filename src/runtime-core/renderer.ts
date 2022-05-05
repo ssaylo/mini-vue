@@ -1,5 +1,6 @@
 import { isObject } from '../shared';
 import { createComponentInstance, setupComponent } from './component';
+import { ShapeFlags } from '../shared/ShapeFlags';
 
 export function render(vnode: any, container: any) {
   // patch
@@ -11,13 +12,20 @@ export function patch(vnode: any, container: any) {
 
   console.log(vnode.type);
 
+  // shapeFlags
+  // vnode -> flag
+  // element
+
+  const { shapeFlag } = vnode;
+
   //TODO: so how to distinguish between element and compoennt?
   // processElement();
   // check type of vnode
 
-  if (typeof vnode.type === 'string') { 
+  if (shapeFlag & ShapeFlags.ELEMENT) { 
     processElement(vnode, container);
-  } else if (isObject(vnode.type)) {
+    // statefulComponent
+  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
     processComponent(vnode, container);
   }
 
@@ -45,11 +53,13 @@ function mountElement(vnode: any, container: any) {
   // after vnode
   const el = (vnode.el = document.createElement(vnode.type));
   // string 
-  const { children, props } = vnode;
+  const { children, props, shapeFlag } = vnode;
 
-  if (typeof children === 'string') {
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    // text_children
     el.textContent = children;
-  } else if (Array.isArray(children)) {
+  } else if (shapeFlag & ShapeFlags.ARRAY_CHILREN) {
+    // array_children
     mountChildren(vnode, el)
   }
 
