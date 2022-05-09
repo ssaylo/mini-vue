@@ -1,6 +1,7 @@
 import { isObject } from '../shared';
 import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags } from '../shared/ShapeFlags';
+import { Fragment } from './vnode';
 
 export function render(vnode: any, container: any) {
   // patch
@@ -16,18 +17,25 @@ export function patch(vnode: any, container: any) {
   // vnode -> flag
   // element
 
-  const { shapeFlag } = vnode;
+  const { shapeFlag, type } = vnode;
+
+  switch (type) {
+    case Fragment:
+      processFragment(vnode, container);
+      break;
+    
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) { 
+        processElement(vnode, container);
+        // statefulComponent
+      } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        processComponent(vnode, container);
+      }
+  }
 
   //TODO: so how to distinguish between element and compoennt?
   // processElement();
   // check type of vnode
-
-  if (shapeFlag & ShapeFlags.ELEMENT) { 
-    processElement(vnode, container);
-    // statefulComponent
-  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-    processComponent(vnode, container);
-  }
 
   // check isElement -> element
 }
@@ -38,6 +46,10 @@ function processElement(vnode: any, container: any) {
 
 function processComponent(vnode: any, container: any) {
   mountComponent(vnode, container);
+}
+
+function processFragment(vnode: any, container: any) {
+  mountChildren(vnode, container);
 }
 
 function mountElement(vnode: any, container: any) {
