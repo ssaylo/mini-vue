@@ -104,7 +104,7 @@ export function createRenderer(options: any) {
       // }
       patchProps(el, key, val);
     }
-    container.append(el);
+    // container.append(el);
     insert(el, container)
   }
 
