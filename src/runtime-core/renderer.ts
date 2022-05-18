@@ -6,7 +6,8 @@ import { createAppAPI } from './createApp';
 
 export function createRenderer(options: any) {
 
-  const { createElement, patchProps, insert } = options;
+  // hostCreateElement 好看出是我们传入的接口的问题
+  const { createElement: hostCreateElement, patchProps: hostPatchProps, insert: hostInsert } = options;
 
   function render(vnode: any, container: any) {
     // patch
@@ -78,7 +79,7 @@ export function createRenderer(options: any) {
     // document.body.appendChild(el);
 
     // after vnode
-    const el = (vnode.el = createElement(vnode.type));
+    const el = (vnode.el = hostCreateElement(vnode.type));
     // string 
     const { children, props, shapeFlag } = vnode;
 
@@ -102,10 +103,10 @@ export function createRenderer(options: any) {
       // } else {
       //   el.setAttribute(key, val);
       // }
-      patchProps(el, key, val);
+      hostPatchProps(el, key, val);
     }
     // container.append(el);
-    insert(el, container)
+    hostInsert(el, container)
   }
 
   function mountComponent(initialVNode: any, container: any, parentNodeComponent: any) {
