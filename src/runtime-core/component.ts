@@ -3,6 +3,7 @@ import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { shallowReadOnly } from '../reactivity/reactive';
 import { emit } from "./componentEmit";
 import { initSlots } from "./componentSlots";
+import { proxyRefs } from "../reactivity";
 
 export function createComponentInstance(vnode: any, parent: any) {
   const component = {
@@ -57,7 +58,7 @@ function handleSetupResult(instance: any, setupResult: any) {
   // TODO function
 
   if (typeof setupResult === "object") {
-    instance.setupState = setupResult;
+    instance.setupState = proxyRefs(setupResult);
   }
 
   // make sure render is exist
