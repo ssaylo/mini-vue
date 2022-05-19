@@ -125,15 +125,19 @@ export function createRenderer(options: any) {
 
   function setupRenderEffect(instance: any, container: any, initialVNode: any) {
     effect(() => {
-      const { proxy } = instance;
-      const subTree = instance.render.call(proxy);
-      // vnode tree(element) -> patch
-      // vnode -> element -> mountElement
-      patch(subTree, container, instance);
-    
-      // SO ->  element -> mount
-      initialVNode.el = subTree.el;
- 
+      if (!instance.isMounted) { //  初始化
+        const { proxy } = instance;
+        const subTree = instance.render.call(proxy);
+        // vnode tree(element) -> patch
+        // vnode -> element -> mountElement
+        patch(subTree, container, instance);
+        // SO ->  element -> mount
+        initialVNode.el = subTree.el;
+
+        instance.isMounted = true;
+      } else {
+        console.log('should update')
+      }
     })
   }
 
