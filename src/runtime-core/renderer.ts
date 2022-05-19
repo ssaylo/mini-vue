@@ -64,6 +64,30 @@ export function createRenderer(options: any) {
   function patchElement(n1: any, n2: any, container: any) {
     console.log("patch n1", n1);
     console.log("patch n2", n2);
+
+    const oldProps = n1.props || {};
+    const newProps = n2.props || {};
+
+    const el = n2.el = n1.el;
+
+    patchProps(el, oldProps, newProps);
+  }
+
+  function patchProps(el: any, oldProps: any, newProps: any) {
+    for (const key in newProps) {
+      const prevProp = oldProps[key];
+      const nextProp = newProps[key];
+
+      if (prevProp !== nextProp) {
+        hostPatchProps(el, key, prevProp, nextProp);
+      }
+
+      for (const key in oldProps) {
+        if (!(key in newProps)) {
+          hostPatchProps(el, key, oldProps[key], null);
+        }
+      }
+    }
   }
 
   function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any) {
@@ -111,7 +135,7 @@ export function createRenderer(options: any) {
       // } else {
       //   el.setAttribute(key, val);
       // }
-      hostPatchProps(el, key, val);
+      hostPatchProps(el, key, null, val);
     }
     // container.append(el);
     hostInsert(el, container)
