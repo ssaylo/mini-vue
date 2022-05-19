@@ -26,3 +26,11 @@ export function camelize(str: string) {
   return str.replace(/-(\w)/g, (_, c) => c ? c.toUpperCase() : "");
 }
 
+export function isEmpty(obj: any) {
+  // simpley isEmpty
+  // 懒得用 lodash
+  for (var key in obj){
+    if (key) return false;
+  }
+  return true;
+}

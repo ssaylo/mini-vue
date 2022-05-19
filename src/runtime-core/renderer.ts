@@ -1,4 +1,4 @@
-import { isObject } from '../shared';
+import { isEmpty, isObject } from '../shared';
 import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags } from '../shared/ShapeFlags';
 import { Fragment, Text } from './vnode';
@@ -74,21 +74,25 @@ export function createRenderer(options: any) {
   }
 
   function patchProps(el: any, oldProps: any, newProps: any) {
-    for (const key in newProps) {
-      const prevProp = oldProps[key];
-      const nextProp = newProps[key];
+    if (oldProps !== newProps) {
+      for (const key in newProps) {
+        const prevProp = oldProps[key];
+        const nextProp = newProps[key];
 
-      if (prevProp !== nextProp) {
-        hostPatchProps(el, key, prevProp, nextProp);
-      }
+        if (prevProp !== nextProp) {
+          hostPatchProps(el, key, prevProp, nextProp);
+        }
 
-      for (const key in oldProps) {
-        if (!(key in newProps)) {
-          hostPatchProps(el, key, oldProps[key], null);
+        if (!isEmpty(oldProps)) {
+          for (const key in oldProps) {
+            if (!(key in newProps)) {
+              hostPatchProps(el, key, oldProps[key], null);
+            }
+          }
         }
       }
     }
-  }
+ }
 
   function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any) {
     mountChildren(n2, container, parentNodeComponent);
