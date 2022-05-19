@@ -12,35 +12,33 @@ export function createRenderer(options: any) {
 
   function render(vnode: any, container: any) {
     // patch
-    patch(vnode, container, null);
+    patch(null, vnode, container, null);
   }
 
-  function patch(vnode: any, container: any, parentNodeComponent: any) {
+  // n1 -> oldVnode, n2 -> newVnode
+  function patch(n1: any, n2: any, container: any, parentNodeComponent: any) {
     // component
-
-    console.log(vnode.type);
-
     // shapeFlags
     // vnode -> flag
     // element
 
-    const { shapeFlag, type } = vnode;
+    const { shapeFlag, type } = n2;
 
     switch (type) {
       case Fragment:
-        processFragment(vnode, container, parentNodeComponent);
+        processFragment(n1, n2, container, parentNodeComponent);
         break;
 
       case Text:
-        processText(vnode, container);
+        processText(n1, n2, container);
         break;
     
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(vnode, container, parentNodeComponent);
+          processElement(n1, n2, container, parentNodeComponent);
           // statefulComponent
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(vnode, container, parentNodeComponent);
+          processComponent(n1, n2, container, parentNodeComponent);
         }
     }
 
@@ -51,21 +49,30 @@ export function createRenderer(options: any) {
     // check isElement -> element
   }
 
-  function processElement(vnode: any, container: any, parentNodeComponent: any) {
-    mountElement(vnode, container, parentNodeComponent);
+  function processElement(n1: any, n2: any, container: any, parentNodeComponent: any) {
+    if (!n1) {
+      mountElement(n2, container, parentNodeComponent);
+    } else {
+      patchElement(n1, n2, container);
+    }
   }
 
-  function processComponent(vnode: any, container: any, parentNodeComponent: any) {
-    mountComponent(vnode, container, parentNodeComponent);
+  function processComponent(n1: any, n2: any, container: any, parentNodeComponent: any) {
+    mountComponent(n2, container, parentNodeComponent);
   }
 
-  function processFragment(vnode: any, container: any, parentNodeComponent: any) {
-    mountChildren(vnode, container, parentNodeComponent);
+  function patchElement(n1: any, n2: any, container: any) {
+    console.log("patch n1", n1);
+    console.log("patch n2", n2);
   }
 
-  function processText(vnode: any, container: any) {
-    const { children } = vnode;
-    const textNode = (vnode.el = document.createTextNode(children));
+  function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any) {
+    mountChildren(n2, container, parentNodeComponent);
+  }
+
+  function processText(n1: any, n2: any, container: any) {
+    const { children } = n2;
+    const textNode = (n2.el = document.createTextNode(children));
     container.append(textNode);
   }
 
@@ -119,7 +126,7 @@ export function createRenderer(options: any) {
 
   function mountChildren(vnode: any, container: any, parentNodeComponent: any) {
     vnode.children.forEach((child: any) => {
-      patch(child, container, parentNodeComponent);
+      patch(null, child, container, parentNodeComponent);
     })
   }
 
@@ -127,16 +134,31 @@ export function createRenderer(options: any) {
     effect(() => {
       if (!instance.isMounted) { //  初始化
         const { proxy } = instance;
-        const subTree = instance.render.call(proxy);
+        const subTree = (instance.subTree = instance.render.call(proxy));
         // vnode tree(element) -> patch
         // vnode -> element -> mountElement
-        patch(subTree, container, instance);
+        patch(null, subTree, container, instance);
         // SO ->  element -> mount
         initialVNode.el = subTree.el;
 
         instance.isMounted = true;
       } else {
         console.log('should update')
+        const { proxy } = instance;
+        const prevSubTree = instance.subTree;
+        const subTree = instance.render.call(proxy);
+        instance.subTree = subTree;
+
+        console.log("prevSubTree", prevSubTree);
+        console.log("currentSubTree", subTree);
+
+        // vnode tree(element) -> patch
+        // vnode -> element -> mountElement
+        patch(prevSubTree, subTree, container, instance);
+        // SO ->  element -> mount
+        initialVNode.el = subTree.el;
+
+        instance.isMounted = true;
       }
     })
   }
