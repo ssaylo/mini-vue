@@ -3,6 +3,7 @@ import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags } from '../shared/ShapeFlags';
 import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
+import { effect } from '../reactivity/effect';
 
 export function createRenderer(options: any) {
 
@@ -123,14 +124,17 @@ export function createRenderer(options: any) {
   }
 
   function setupRenderEffect(instance: any, container: any, initialVNode: any) {
-    const { proxy } = instance;
-    const subTree = instance.render.call(proxy);
-    // vnode tree(element) -> patch
-    // vnode -> element -> mountElement
-    patch(subTree, container, instance);
-  
-    // SO ->  element -> mount
-    initialVNode.el = subTree.el;
+    effect(() => {
+      const { proxy } = instance;
+      const subTree = instance.render.call(proxy);
+      // vnode tree(element) -> patch
+      // vnode -> element -> mountElement
+      patch(subTree, container, instance);
+    
+      // SO ->  element -> mount
+      initialVNode.el = subTree.el;
+ 
+    })
   }
 
   return {
