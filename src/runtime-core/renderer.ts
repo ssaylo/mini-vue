@@ -85,15 +85,30 @@ export function createRenderer(options: any) {
     const prevShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag
 
-    // array -> text
+    const c1 = n1.children;
+    const c2 = n2.children;
+
+    // array -> text 
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      if (prevShapeFlag & ShapeFlags.ARRAY_CHILREN) { 
-        // 1. 把老的 children 清空
+      // if (prevShapeFlag & ShapeFlags.ARRAY_CHILREN) {
+      //   // 1. 把老的 children 清空
+      //   unmountChildren(n1.children);
+      //   // 2. 设置 text
+      //   hostSetElementText(container, n2.children);
+      // } else {
+      //   if (c1 !== c2) {
+      //     hostSetElementText(container, n2.children);
+      //   }
+
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILREN) {
         unmountChildren(n1.children);
-        // 2. 设置 text
+      }
+      if (c1 !== c2) {
         hostSetElementText(container, n2.children);
       }
     }
+
+    // text-text
   }
 
   function unmountChildren(children: any) {
