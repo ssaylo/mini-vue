@@ -8,7 +8,14 @@ import { effect } from '../reactivity/effect';
 export function createRenderer(options: any) {
 
   // hostCreateElement 好看出是我们传入的接口的问题
-  const { createElement: hostCreateElement, patchProps: hostPatchProps, insert: hostInsert } = options;
+  const {
+    createElement:
+    hostCreateElement,
+    patchProps: hostPatchProps,
+    insert: hostInsert,
+    remove: hostRemove,
+    setElementText: hostSetElementText,
+  } = options;
 
   function render(vnode: any, container: any) {
     // patch
@@ -71,6 +78,29 @@ export function createRenderer(options: any) {
     const el = n2.el = n1.el;
 
     patchProps(el, oldProps, newProps);
+    patchChildren(n1, n2, el);
+  }
+
+  function patchChildren(n1: any, n2: any, container: any) {
+    const prevShapeFlag = n1.shapeFlag;
+    const shapeFlag = n2.shapeFlag
+
+    // array -> text
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILREN) { 
+        // 1. 把老的 children 清空
+        unmountChildren(n1.children);
+        // 2. 设置 text
+        hostSetElementText(container, n2.children);
+      }
+    }
+  }
+
+  function unmountChildren(children: any) {
+    for (let i = 0; i < children.length; i++) { 
+      const el = children[i].el;
+      hostRemove(el);
+    }
   }
 
   function patchProps(el: any, oldProps: any, newProps: any) {
