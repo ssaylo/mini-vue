@@ -60,7 +60,7 @@ export function createRenderer(options: any) {
     if (!n1) {
       mountElement(n2, container, parentNodeComponent);
     } else {
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, container, parentNodeComponent);
     }
   }
 
@@ -68,7 +68,7 @@ export function createRenderer(options: any) {
     mountComponent(n2, container, parentNodeComponent);
   }
 
-  function patchElement(n1: any, n2: any, container: any) {
+  function patchElement(n1: any, n2: any, container: any, parentComponent: any) {
     console.log("patch n1", n1);
     console.log("patch n2", n2);
 
@@ -78,10 +78,10 @@ export function createRenderer(options: any) {
     const el = n2.el = n1.el;
 
     patchProps(el, oldProps, newProps);
-    patchChildren(n1, n2, el);
+    patchChildren(n1, n2, el, parentComponent);
   }
 
-  function patchChildren(n1: any, n2: any, container: any) {
+  function patchChildren(n1: any, n2: any, container: any, parentComponent: any) {
     const prevShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag
 
@@ -105,6 +105,11 @@ export function createRenderer(options: any) {
       }
       if (c1 !== c2) {
         hostSetElementText(container, n2.children);
+      }
+    } else {
+      if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        hostSetElementText(container, "");
+        mountChildren(n2, container, parentComponent )
       }
     }
 
