@@ -153,7 +153,7 @@ export function createRenderer(options: any) {
       }
 
       i++;
-      console.log(i);
+      // console.log(i);
     } 
 
     // 右侧
@@ -172,8 +172,8 @@ export function createRenderer(options: any) {
 
     if (i > e1) { // 新建
       if (i <= e2) {
-        const nextPos = i + 1;
-        const anchor = i + 1 < l2 ? c2[nextPos].el : null;
+        const nextPos = e2 + 1;
+        const anchor = nextPos < l2 ? c2[nextPos].el : null;
         while (i <= e2) { // 可能会有多个 children
           patch(null, c2[i], container, parentComponent, anchor);
           i++;
