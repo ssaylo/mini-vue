@@ -260,6 +260,10 @@ export function createRenderer(options: any) {
         const nextChild = c2[nextIndex];
         const anchor = nextIndex + 1 < l2 ? c2[nextIndex+1].el : null;
 
+        if(newIndexToOldIndexMap[i] === 0) { // 创建
+          patch(null, nextChild, container, parentComponent, anchor);
+        }
+
         if(moved === true) {
           if(i !== increasingNewIndexSequence[j]) {
             console.log("移动位置");
