@@ -189,6 +189,8 @@ export function createRenderer(options: any) {
       let s1 = i;
       let s2 = i;
 
+      const toBePatchedCounts = e2 - s2;
+      let patchedCounts = 0;
       const keyToNewIndexMap = new Map();
 
       for (let i = s2; i <= e2; i++) {
@@ -198,6 +200,13 @@ export function createRenderer(options: any) {
 
       for (let i = s1; i <= e1; i++) {
         const prevChild = c1[i];
+
+        // 新的节点都 patch 了，后面的所有 old 节点都可以直接删了
+        if (patchedCounts > toBePatchedCounts) { 
+          hostRemove(prevChild.el);
+          continue;
+        }
+
         let newIndex;
         if (prevChild.key !== null) {
           newIndex = keyToNewIndexMap.get(prevChild.key);
@@ -213,6 +222,7 @@ export function createRenderer(options: any) {
           hostRemove(prevChild.el);
         } else {
           patch(prevChild, c2[newIndex], container, parentComponent, null);
+          patchedCounts++;
         }
       }
     }
