@@ -19,11 +19,11 @@ export function createRenderer(options: any) {
 
   function render(vnode: any, container: any) {
     // patch
-    patch(null, vnode, container, null);
+    patch(null, vnode, container, null, null);
   }
 
   // n1 -> oldVnode, n2 -> newVnode
-  function patch(n1: any, n2: any, container: any, parentNodeComponent: any) {
+  function patch(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
     // component
     // shapeFlags
     // vnode -> flag
@@ -33,7 +33,7 @@ export function createRenderer(options: any) {
 
     switch (type) {
       case Fragment:
-        processFragment(n1, n2, container, parentNodeComponent);
+        processFragment(n1, n2, container, parentNodeComponent, anchor);
         break;
 
       case Text:
@@ -42,10 +42,10 @@ export function createRenderer(options: any) {
     
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(n1, n2, container, parentNodeComponent);
+          processElement(n1, n2, container, parentNodeComponent, anchor);
           // statefulComponent
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(n1, n2, container, parentNodeComponent);
+          processComponent(n1, n2, container, parentNodeComponent, anchor);
         }
     }
 
@@ -56,19 +56,19 @@ export function createRenderer(options: any) {
     // check isElement -> element
   }
 
-  function processElement(n1: any, n2: any, container: any, parentNodeComponent: any) {
+  function processElement(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
     if (!n1) {
-      mountElement(n2, container, parentNodeComponent);
+      mountElement(n2, container, parentNodeComponent, anchor);
     } else {
-      patchElement(n1, n2, container, parentNodeComponent);
+      patchElement(n1, n2, container, parentNodeComponent, anchor);
     }
   }
 
-  function processComponent(n1: any, n2: any, container: any, parentNodeComponent: any) {
-    mountComponent(n2, container, parentNodeComponent);
+  function processComponent(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
+    mountComponent(n2, container, parentNodeComponent, anchor);
   }
 
-  function patchElement(n1: any, n2: any, container: any, parentComponent: any) {
+  function patchElement(n1: any, n2: any, container: any, parentComponent: any, anchor: any) {
     console.log("patch n1", n1);
     console.log("patch n2", n2);
 
@@ -78,10 +78,10 @@ export function createRenderer(options: any) {
     const el = n2.el = n1.el;
 
     patchProps(el, oldProps, newProps);
-    patchChildren(n1, n2, el, parentComponent);
+    patchChildren(n1, n2, el, parentComponent, anchor);
   }
 
-  function patchChildren(n1: any, n2: any, container: any, parentComponent: any) {
+  function patchChildren(n1: any, n2: any, container: any, parentComponent: any, anchor: any) {
     const prevShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag
 
@@ -109,11 +109,82 @@ export function createRenderer(options: any) {
     } else {
       if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
         hostSetElementText(container, "");
-        mountChildren(n2, container, parentComponent )
+        mountChildren(n2, container, parentComponent, anchor)
+      } else {
+        // array -> array
+        patchKeyChildren(c1, c2, container, parentComponent, anchor);
       }
     }
 
+    // 然后就是 diff Array->Array
+    // 1. 双端对比
+    // 2. 左侧对比
+    // 3. 右侧对比
+    // 4. 新的比老的长 -> 左侧新建 or 右侧新建
+    // 5. 新的比老的短 -> 左侧删除 or 右侧删除
+    // 6. 中间diff 大概有以下三种情况
+    //  a. 创建新的 （老的里面不存在，新的里面存在）
+    //  b. 删除老的 （老的里面存在，新的里面不存在）
+    //  c. 移动（老的新的都存在，但是位置移动了）
+
     // text-text
+  }
+
+  function patchKeyChildren(c1: any, c2: any, container: any, parentComponent: any, parentAnchor: any) {
+    const l1 = c1.length;
+    const l2 = c2.length;
+
+    let i = 0;
+    let e1 = l1 - 1;
+    let e2 = l2 - 1;
+
+    function isSameVNodeType(n1: any, n2: any) {
+      return n1.type === n2.type && n1.key === n2.key;
+    }
+
+    // 左侧
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent, parentAnchor);
+      } else {
+        break;
+      }
+
+      i++;
+      console.log(i);
+    } 
+
+    // 右侧
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container, parentComponent, parentAnchor);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
+
+    if (i > e1) { // 新建
+      if (i <= e2) {
+        const nextPos = i + 1;
+        const anchor = i + 1 < l2 ? c2[nextPos].el : null;
+        while (i <= e2) { // 可能会有多个 children
+          patch(null, c2[i], container, parentComponent, anchor);
+          i++;
+        }
+      }
+    } else if (i > e2) { // 删除
+      while (i <= e1) {
+        hostRemove(c1[i].el);
+        i++;
+      }
+    }
   }
 
   function unmountChildren(children: any) {
@@ -144,8 +215,8 @@ export function createRenderer(options: any) {
     }
  }
 
-  function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any) {
-    mountChildren(n2, container, parentNodeComponent);
+  function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
+    mountChildren(n2, container, parentNodeComponent, anchor);
   }
 
   function processText(n1: any, n2: any, container: any) {
@@ -154,7 +225,7 @@ export function createRenderer(options: any) {
     container.append(textNode);
   }
 
-  function mountElement(vnode: any, container: any, parentNodeComponent: any) {
+  function mountElement(vnode: any, container: any, parentNodeComponent: any, anchor: any) {
     // createElement
     // mountElement -> patch
 
@@ -174,7 +245,7 @@ export function createRenderer(options: any) {
       el.textContent = children;
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILREN) {
       // array_children
-      mountChildren(vnode, el, parentNodeComponent)
+      mountChildren(vnode, el, parentNodeComponent, anchor)
     }
 
     for (const key in props) {
@@ -192,30 +263,30 @@ export function createRenderer(options: any) {
       hostPatchProps(el, key, null, val);
     }
     // container.append(el);
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
-  function mountComponent(initialVNode: any, container: any, parentNodeComponent: any) {
+  function mountComponent(initialVNode: any, container: any, parentNodeComponent: any, anchor: any) {
     const instance = createComponentInstance(initialVNode, parentNodeComponent);
     setupComponent(instance);
     // debugger
-    setupRenderEffect(instance, container, initialVNode);
+    setupRenderEffect(instance, container, initialVNode, anchor);
   }
 
-  function mountChildren(vnode: any, container: any, parentNodeComponent: any) {
+  function mountChildren(vnode: any, container: any, parentNodeComponent: any, anchor: any) {
     vnode.children.forEach((child: any) => {
-      patch(null, child, container, parentNodeComponent);
+      patch(null, child, container, parentNodeComponent, anchor);
     })
   }
 
-  function setupRenderEffect(instance: any, container: any, initialVNode: any) {
+  function setupRenderEffect(instance: any, container: any, initialVNode: any, anchor: any) {
     effect(() => {
       if (!instance.isMounted) { //  初始化
         const { proxy } = instance;
         const subTree = (instance.subTree = instance.render.call(proxy));
         // vnode tree(element) -> patch
         // vnode -> element -> mountElement
-        patch(null, subTree, container, instance);
+        patch(null, subTree, container, instance, anchor);
         // SO ->  element -> mount
         initialVNode.el = subTree.el;
 
@@ -232,7 +303,7 @@ export function createRenderer(options: any) {
 
         // vnode tree(element) -> patch
         // vnode -> element -> mountElement
-        patch(prevSubTree, subTree, container, instance);
+        patch(prevSubTree, subTree, container, instance, anchor);
         // SO ->  element -> mount
         initialVNode.el = subTree.el;
 

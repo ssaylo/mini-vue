@@ -1,7 +1,7 @@
 import { h } from "../../lib/mini-vue.esm.js";
 
 import ArrayToText from './ArrayToText.js';
-// import ArrayToArray from './ArrayToArray.js';
+import ArrayToArray from './ArrayToArray.js';
 import TextToText from './TextToText.js';
 import TextToArray from './TextToArray.js';
 
@@ -14,7 +14,8 @@ export default {
       h("p", {}, "主页"),
       // h(ArrayToText), 
       // h(TextToText),
-      h(TextToArray)
+      // h(TextToArray),
+      h(ArrayToArray)
     ])
   }
 }
