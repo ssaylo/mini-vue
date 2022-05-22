@@ -194,6 +194,10 @@ export function createRenderer(options: any) {
       const keyToNewIndexMap = new Map();
       const newIndexToOldIndexMap = new Array(toBePatched);
 
+      // 优化，是否还需要用最长公共子序列去求 （只有后面的移动后的位置比前面的小才需要）
+      let moved = false;
+      let maxNewIndexSoFar = 0;
+
       for (let i = 0; i < toBePatched; i++) {
         newIndexToOldIndexMap[i] = 0;
       }
@@ -226,6 +230,15 @@ export function createRenderer(options: any) {
         if (newIndex === undefined) { // 旧节点在新的里面不存在
           hostRemove(prevChild.el);
         } else {
+
+          // 优化
+          if(newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex;
+          } else {
+            // 标记新的节点有没有移动位置
+            moved = true;
+          }
+
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container, parentComponent, null);
           patched++;
@@ -246,12 +259,14 @@ export function createRenderer(options: any) {
         const nextIndex = i + s2;
         const nextChild = c2[nextIndex];
         const anchor = nextIndex + 1 < l2 ? c2[nextIndex+1].el : null;
-        console.log('>>>>>>>>>>>>>', anchor)
-        if(i !== increasingNewIndexSequence[j]) {
-          console.log("移动位置");
-          hostInsert(nextChild.el, container, anchor);
-        } else {
-          j--;
+
+        if(moved === true) {
+          if(i !== increasingNewIndexSequence[j]) {
+            console.log("移动位置");
+            hostInsert(nextChild.el, container, anchor);
+          } else {
+            j--;
+          }
         }
       }
     }
