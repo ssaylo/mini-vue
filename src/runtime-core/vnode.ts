@@ -12,6 +12,7 @@ export function createVNode(type: string | Symbol, props?: any, children?: any) 
     shapeFlag: getShapeFlag(type),
     el: null,
     key: props && props.key,
+    component: null,
   }
 
   // children
@@ -30,7 +31,7 @@ export function createVNode(type: string | Symbol, props?: any, children?: any) 
   return vnode;
 }
 
-export function createTextVNode(text: string) { 
+export function createTextVNode(text: string) {
   return createVNode(Text, {}, text);
 }
 

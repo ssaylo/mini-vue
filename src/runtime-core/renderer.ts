@@ -5,6 +5,19 @@ import {Fragment, Text} from './vnode';
 import {createAppAPI} from './createApp';
 import {effect} from '../reactivity/effect';
 
+function shouldUpdateComponent(prevVnode: any, nextVnode: any) {
+  const { props: prevProps } = prevVnode;
+  const { props: nextProps } = nextVnode;
+
+  for (const key in nextProps) {
+    if(nextProps[key] !== prevProps[key]) {
+      return true
+    }
+  }
+
+  return false;
+}
+
 export function createRenderer(options: any) {
 
   // hostCreateElement 好看出是我们传入的接口的问题
@@ -65,7 +78,22 @@ export function createRenderer(options: any) {
   }
 
   function processComponent(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
-    mountComponent(n2, container, parentNodeComponent, anchor);
+    if(!n1) {
+      mountComponent(n2, container, parentNodeComponent, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  }
+
+  function updateComponent(n1: any, n2: any) {
+    const instance = (n2.component = n1.component);
+    if(shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      n2.vnode = n2;
+    }
   }
 
   function patchElement(n1: any, n2: any, container: any, parentComponent: any, anchor: any) {
@@ -356,7 +384,7 @@ export function createRenderer(options: any) {
   }
 
   function mountComponent(initialVNode: any, container: any, parentNodeComponent: any, anchor: any) {
-    const instance = createComponentInstance(initialVNode, parentNodeComponent);
+    const instance = (initialVNode.component = createComponentInstance(initialVNode, parentNodeComponent));
     setupComponent(instance);
     // debugger
     setupRenderEffect(instance, container, initialVNode, anchor);
@@ -369,7 +397,7 @@ export function createRenderer(options: any) {
   }
 
   function setupRenderEffect(instance: any, container: any, initialVNode: any, anchor: any) {
-    effect(() => {
+    instance.update = effect(() => {
       if (!instance.isMounted) { //  初始化
         const {proxy} = instance;
         const subTree = (instance.subTree = instance.render.call(proxy));
@@ -382,18 +410,20 @@ export function createRenderer(options: any) {
         instance.isMounted = true;
       } else {
         console.log('should update')
+
+        // 需要一个 vnode
+        const { next, vnode } = instance;  // vnode 更新之前的节点， next 更新之后的节点
+        if(next) {
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
+
         const {proxy} = instance;
         const prevSubTree = instance.subTree;
         const subTree = instance.render.call(proxy);
         instance.subTree = subTree;
 
-        console.log("prevSubTree", prevSubTree);
-        console.log("currentSubTree", subTree);
-
-        // vnode tree(element) -> patch
-        // vnode -> element -> mountElement
         patch(prevSubTree, subTree, container, instance, anchor);
-        // SO ->  element -> mount
         initialVNode.el = subTree.el;
 
         instance.isMounted = true;
@@ -406,6 +436,11 @@ export function createRenderer(options: any) {
   }
 }
 
+function updateComponentPreRender(instance: any, nextVNode: any) {
+  instance.vnode = nextVNode;
+  instance.next = null;
+  instance.props = nextVNode.props;
+}
 
 
 
