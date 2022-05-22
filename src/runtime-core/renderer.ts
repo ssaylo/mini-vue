@@ -1,16 +1,16 @@
-import { isEmpty, isObject } from '../shared';
-import { createComponentInstance, setupComponent } from './component';
-import { ShapeFlags } from '../shared/ShapeFlags';
-import { Fragment, Text } from './vnode';
-import { createAppAPI } from './createApp';
-import { effect } from '../reactivity/effect';
+import {getSequence, isEmpty, isObject} from '../shared';
+import {createComponentInstance, setupComponent} from './component';
+import {ShapeFlags} from '../shared/ShapeFlags';
+import {Fragment, Text} from './vnode';
+import {createAppAPI} from './createApp';
+import {effect} from '../reactivity/effect';
 
 export function createRenderer(options: any) {
 
   // hostCreateElement 好看出是我们传入的接口的问题
   const {
     createElement:
-    hostCreateElement,
+      hostCreateElement,
     patchProps: hostPatchProps,
     insert: hostInsert,
     remove: hostRemove,
@@ -29,7 +29,7 @@ export function createRenderer(options: any) {
     // vnode -> flag
     // element
 
-    const { shapeFlag, type } = n2;
+    const {shapeFlag, type} = n2;
 
     switch (type) {
       case Fragment:
@@ -39,7 +39,7 @@ export function createRenderer(options: any) {
       case Text:
         processText(n1, n2, container);
         break;
-    
+
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, parentNodeComponent, anchor);
@@ -88,7 +88,7 @@ export function createRenderer(options: any) {
     const c1 = n1.children;
     const c2 = n2.children;
 
-    // array -> text 
+    // array -> text
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // if (prevShapeFlag & ShapeFlags.ARRAY_CHILREN) {
       //   // 1. 把老的 children 清空
@@ -154,7 +154,7 @@ export function createRenderer(options: any) {
 
       i++;
       // console.log(i);
-    } 
+    }
 
     // 右侧
     while (i <= e1 && i <= e2) {
@@ -189,9 +189,14 @@ export function createRenderer(options: any) {
       let s1 = i;
       let s2 = i;
 
-      const toBePatchedCounts = e2 - s2;
-      let patchedCounts = 0;
+      const toBePatched = e2 - s2 + 1;
+      let patched = 0;
       const keyToNewIndexMap = new Map();
+      const newIndexToOldIndexMap = new Array(toBePatched);
+
+      for (let i = 0; i < toBePatched; i++) {
+        newIndexToOldIndexMap[i] = 0;
+      }
 
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i];
@@ -202,7 +207,7 @@ export function createRenderer(options: any) {
         const prevChild = c1[i];
 
         // 新的节点都 patch 了，后面的所有 old 节点都可以直接删了
-        if (patchedCounts > toBePatchedCounts) { 
+        if (patched > toBePatched) {
           hostRemove(prevChild.el);
           continue;
         }
@@ -221,15 +226,39 @@ export function createRenderer(options: any) {
         if (newIndex === undefined) { // 旧节点在新的里面不存在
           hostRemove(prevChild.el);
         } else {
+          newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container, parentComponent, null);
-          patchedCounts++;
+          patched++;
+        }
+      }
+      // 获取到最长递增子序列
+      const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+      let j = increasingNewIndexSequence.length - 1;
+      // for (let i = 0; i < toBePatched; i++) {
+      //     if(i !== increasingNewIndexSequence[j]) {
+      //       console.log("移动位置");
+      //     } else {
+      //       j++;
+      //     }
+      // }
+      // 为了稳定，insertBefore 是插到前面，所以这里从后往前找比较好
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = i + s2;
+        const nextChild = c2[nextIndex];
+        const anchor = nextIndex + 1 < l2 ? c2[nextIndex+1].el : null;
+        console.log('>>>>>>>>>>>>>', anchor)
+        if(i !== increasingNewIndexSequence[j]) {
+          console.log("移动位置");
+          hostInsert(nextChild.el, container, anchor);
+        } else {
+          j--;
         }
       }
     }
   }
 
   function unmountChildren(children: any) {
-    for (let i = 0; i < children.length; i++) { 
+    for (let i = 0; i < children.length; i++) {
       const el = children[i].el;
       hostRemove(el);
     }
@@ -254,14 +283,14 @@ export function createRenderer(options: any) {
         }
       }
     }
- }
+  }
 
   function processFragment(n1: any, n2: any, container: any, parentNodeComponent: any, anchor: any) {
     mountChildren(n2, container, parentNodeComponent, anchor);
   }
 
   function processText(n1: any, n2: any, container: any) {
-    const { children } = n2;
+    const {children} = n2;
     const textNode = (n2.el = document.createTextNode(children));
     container.append(textNode);
   }
@@ -278,8 +307,8 @@ export function createRenderer(options: any) {
 
     // after vnode
     const el = (vnode.el = hostCreateElement(vnode.type));
-    // string 
-    const { children, props, shapeFlag } = vnode;
+    // string
+    const {children, props, shapeFlag} = vnode;
 
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // text_children
@@ -323,7 +352,7 @@ export function createRenderer(options: any) {
   function setupRenderEffect(instance: any, container: any, initialVNode: any, anchor: any) {
     effect(() => {
       if (!instance.isMounted) { //  初始化
-        const { proxy } = instance;
+        const {proxy} = instance;
         const subTree = (instance.subTree = instance.render.call(proxy));
         // vnode tree(element) -> patch
         // vnode -> element -> mountElement
@@ -334,7 +363,7 @@ export function createRenderer(options: any) {
         instance.isMounted = true;
       } else {
         console.log('should update')
-        const { proxy } = instance;
+        const {proxy} = instance;
         const prevSubTree = instance.subTree;
         const subTree = instance.render.call(proxy);
         instance.subTree = subTree;
@@ -356,5 +385,8 @@ export function createRenderer(options: any) {
   return {
     createApp: createAppAPI(render)
   }
-
 }
+
+
+
+
