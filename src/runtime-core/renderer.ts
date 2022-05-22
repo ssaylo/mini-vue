@@ -170,6 +170,7 @@ export function createRenderer(options: any) {
       e2--;
     }
 
+    // 新建 or 删除 or 中间操作
     if (i > e1) { // 新建
       if (i <= e2) {
         const nextPos = e2 + 1;
@@ -183,6 +184,36 @@ export function createRenderer(options: any) {
       while (i <= e1) {
         hostRemove(c1[i].el);
         i++;
+      }
+    } else { // 中间对比
+      let s1 = i;
+      let s2 = i;
+
+      const keyToNewIndexMap = new Map();
+
+      for (let i = s2; i <= e2; i++) {
+        const nextChild = c2[i];
+        keyToNewIndexMap.set(nextChild.key, i);
+      }
+
+      for (let i = s1; i <= e1; i++) {
+        const prevChild = c1[i];
+        let newIndex;
+        if (prevChild.key !== null) {
+          newIndex = keyToNewIndexMap.get(prevChild.key);
+        } else {
+          for (let j = 0; j < e2; j++) {
+            if (isSameVNodeType(prevChild, c2[j])) {
+              newIndex = j;
+              break;
+            }
+          }
+        }
+        if (newIndex === undefined) { // 旧节点在新的里面不存在
+          hostRemove(prevChild.el);
+        } else {
+          patch(prevChild, c2[newIndex], container, parentComponent, null);
+        }
       }
     }
   }
