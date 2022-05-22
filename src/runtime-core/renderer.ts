@@ -4,6 +4,7 @@ import {ShapeFlags} from '../shared/ShapeFlags';
 import {Fragment, Text} from './vnode';
 import {createAppAPI} from './createApp';
 import {effect} from '../reactivity/effect';
+import { queueJobs } from './scheduler';
 
 function shouldUpdateComponent(prevVnode: any, nextVnode: any) {
   const { props: prevProps } = prevVnode;
@@ -427,6 +428,11 @@ export function createRenderer(options: any) {
         initialVNode.el = subTree.el;
 
         instance.isMounted = true;
+      }
+    }, {
+      scheduler() {
+        console.log('updateScheduler');
+        queueJobs(instance.update);
       }
     })
   }
