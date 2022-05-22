@@ -431,7 +431,6 @@ export function createRenderer(options: any) {
       }
     }, {
       scheduler() {
-        console.log('updateScheduler');
         queueJobs(instance.update);
       }
     })

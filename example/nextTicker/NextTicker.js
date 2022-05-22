@@ -1,5 +1,5 @@
 // 测试 nextTick 逻辑
-import { h, ref } from "../../lib/mini-vue.esm.js";
+import { h, ref, getCurrentInstance, nextTick } from "../../lib/mini-vue.esm.js";
 
 // 如果 for 循环改变 count 的值 100 次的话
 // 会同时触发 100 次的 update 页面逻辑
@@ -12,9 +12,23 @@ window.count = ref(1);
 // 会发生什么有趣的事呢？
 const Child1 = {
   name: "NextTickerChild1",
-  setup() {},
+  setup() {
+    const instance = getCurrentInstance();
+    function onClick () {
+      for(let i =0; i < 100; i++) {
+        window.count.value = i;
+      }
+      console.log('>>>>>', instance);
+      nextTick(() => {
+        console.log(instance);
+      })
+    }
+    return {
+      onClick
+    }
+  },
   render() {
-    return h("div", {}, `child1 count: ${window.count.value}`);
+    return h("div", {}, [`child1 count: ${window.count.value}`, h("button", { onClick: this.onClick }, "update")]);
   },
 };
 
