@@ -231,6 +231,7 @@ export function createRenderer(options: any) {
         newIndexToOldIndexMap[i] = 0;
       }
 
+      // for (let i = s2; i < e2; i++) { // 这样就会有 bug，见 ArrayToArray.js
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i];
         keyToNewIndexMap.set(nextChild.key, i);
