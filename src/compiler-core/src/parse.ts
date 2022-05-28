@@ -1,3 +1,5 @@
+import { NodeTypes } from "./ast";
+
 export function baseParse(content: string) {
   const context = createParserContext(content);
 
@@ -6,29 +8,47 @@ export function baseParse(content: string) {
 
 function parseChildren(context: any) {
   const nodes: any = [];
-  const node = parseInterpolation(context);
+
+  let node;
+
+  if (context.source.startsWith("{{")) {
+    node = parseInterpolation(context);
+  }
+
   nodes.push(node);
   return nodes;
 }
 
 function parseInterpolation(context: any) {
   // {{ message }}
-  const closeIndex = context.source.indexOf("}}", 2);
-  context.source = context.source.slice(2);
 
-  const rawContextLength = closeIndex - 2;
+  const openDelimiter = "{{"
 
-  const content = context.source.slice(0, rawContextLength);
+  const closeDelimiter = "}}"
 
-  context.source = context.source.slice(rawContextLength + 2);
+  const closeIndex = context.source.indexOf(closeDelimiter, openDelimiter.length);
+  
+  // 推进？扯犊子呢
+  advanceBy(context, openDelimiter.length);
+
+  const rawContextLength = closeIndex - openDelimiter.length;
+
+  const rawContent = context.source.slice(0, rawContextLength);
+  const content = rawContent.trim();
+
+  advanceBy(context, rawContent.Length - closeDelimiter.length)
 
   return {
-      type: "interpolation",
+      type: NodeTypes.INTERPOLATION,
       content: {
-        type: "simple_expression",
+        type: NodeTypes.SIMPLE_EXPRESSION,
         content: content,
       }
     }
+}
+
+function advanceBy(context: any, length: number) {
+  context.source = context.source.slice(length);
 }
 
 function createRoot( children: any ) {
