@@ -26,8 +26,27 @@ function parseChildren(context: any) {
     }
   }
 
+  if (!node) {
+    node = parseText(context);
+  }
+
   nodes.push(node);
   return nodes;
+}
+
+function parseText(context: any) {
+  // 1. 获取content
+  const content = context.source.slice(0, context.source.length);
+
+  // 2. 推进
+  advanceBy(context, content.length);
+
+  console.log(context.source);
+
+  return {
+    type: NodeTypes.TEXT,
+    content: content,
+  }
 }
 
 function parseElement(context: any) {
